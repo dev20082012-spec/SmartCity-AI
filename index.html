@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SurakshaDrishti: Municipal AI Surveillance and Incident Dispatch System</title>
+  <meta name="description" content="Operational urban surveillance and automated incident triage platform utilizing YOLOv8 computer vision and geospatial emergency dispatch routing." />
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  
+  <style>
+    /* Institutional & Enterprise Design System: No gradients, no shadows, no soft curves */
+    :root {
+      --bg-canvas: #f0f2f5;
+      --bg-surface: #ffffff;
+      --bg-subtle: #f8fafc;
+      --bg-header: #0f2438;
+      --bg-header-alt: #16324f;
+      --border-color: #cbd5e1;
+      --border-dark: #94a3b8;
+      
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-subtle: #64748b;
+      --text-on-dark: #f8fafc;
+      
+      --brand-navy: #1b365d;
+      --brand-navy-hover: #122540;
+      
+      /* Semantic Status Indicators */
+      --status-critical: #b91c1c;
+      --status-critical-bg: #fee2e2;
+      --status-high: #c2410c;
+      --status-high-bg: #ffedd5;
+      --status-medium: #b45309;
+      --status-medium-bg: #fef3c7;
+      --status-low: #15803d;
+      --status-low-bg: #dcfce7;
+      --status-info: #0369a1;
+      --status-info-bg: #e0f2fe;
+      
+      --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+
+    body {
+      font-family: var(--font-system);
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      line-height: 1.5;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: var(--brand-navy);
+      text-decoration: underline;
+    }
+    a:hover {
+      color: var(--brand-navy-hover);
+    }
+
+    /* Top Utility Bar */
+    .top-utility-bar {
+      background-color: #0b1a29;
+      color: #94a3b8;
+      font-size: 12px;
+      padding: 6px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1e3a5f;
+    }
+    .top-utility-left, .top-utility-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .status-indicator-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background-color: #22c55e;
+      border-radius: 0;
+      margin-right: 6px;
+    }
+
+    /* Main Header */
+    header.site-header {
+      background-color: var(--bg-header);
+      color: var(--text-on-dark);
+      border-bottom: 2px solid var(--border-dark);
+      padding: 16px 24px;
+    }
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .brand-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #ffffff;
+    }
+    .brand-subtitle {
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    /* Main Navigation */
+    nav.main-nav {
+      background-color: var(--bg-header-alt);
+      border-bottom: 1px solid #204569;
+      padding: 0 24px;
+    }
+    .nav-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+    }
+    .nav-link {
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 16px;
+      border-right: 1px solid #204569;
+      background: transparent;
+      display: inline-block;
+    }
+    .nav-link:hover, .nav-link.active {
+      color: #ffffff;
+      background-color: #0d2238;
+      text-decoration: none;
+    }
+
+    /* Content Layout Container */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Operational Notice / Banner */
+    .operational-banner {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 2px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .banner-text-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--brand-navy);
+      margin-bottom: 4px;
+    }
+    .banner-text-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .banner-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    /* Standard Enterprise Buttons */
+    .btn {
+      font-family: var(--font-system);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 2px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background-color: var(--brand-navy);
+      color: #ffffff;
+      border-color: #122540;
+    }
+    .btn-primary:hover {
+      background-color: var(--brand-navy-hover);
+      color: #ffffff;
+      text-decoration: none;
+    }
+    .btn-secondary {
+      background-color: #ffffff;
+      color: var(--text-main);
+      border-color: var(--border-color);
+    }
+    .btn-secondary:hover {
+      background-color: #e2e8f0;
+      text-decoration: none;
+    }
+    .btn-danger {
+      background-color: var(--status-critical);
+      color: #ffffff;
+      border-color: #991b1b;
+    }
+    .btn-danger:hover {
+      background-color: #991b1b;
+      color: #ffffff;
+    }
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+
+    /* Section Headers */
+    .section-header {
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 8px;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .section-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Layout Split Grids: Strictly 2-column or full width */
+    .grid-two-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    .grid-map-split {
+      display: grid;
+      grid-template-columns: 2.2fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 1024px) {
+      .grid-two-column, .grid-map-split {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Panel Card */
+    .panel {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .panel-header {
+      background-color: var(--bg-subtle);
+      border-bottom: 1px solid var(--border-color);
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--brand-navy);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-body {
+      padding: 16px;
+    }
+    .panel-footer {
+      background-color: var(--bg-subtle);
+      border-top: 1px solid var(--border-color);
+      padding: 10px 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Status Badges */
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid transparent;
+    }
+    .badge-critical {
+      background-color: var(--status-critical-bg);
+      color: var(--status-critical);
+      border-color: #fca5a5;
+    }
+    .badge-high {
+      background-color: var(--status-high-bg);
+      color: var(--status-high);
+      border-color: #fdba74;
+    }
+    .badge-medium {
+      background-color: var(--status-medium-bg);
+      color: var(--status-medium);
+      border-color: #fde047;
+    }
+    .badge-low {
+      background-color: var(--status-low-bg);
+      color: var(--status-low);
+      border-color: #86efac;
+    }
+    .badge-info {
+      background-color: var(--status-info-bg);
+      color: var(--status-info);
+      border-color: #7dd3fc;
+    }
+    .badge-neutral {
+      background-color: #e2e8f0;
+      color: #334155;
+      border-color: #cbd5e1;
+    }
+
+    /* Metric Summary Bar: 4 columns, clean borders */
+    .metrics-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 768px) {
+      .metrics-bar {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    .metric-card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 2px;
+      padding: 14px 16px;
+    }
+    .metric-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .metric-value {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      line-height: 1.1;
+    }
+    .metric-footnote {
+      font-size: 11px;
+      color: var(--text-subtle);
+      margin-top: 6px;
+    }
+
+    /* Map Interface Styles */
+    #incident-map {
+      height: 520px;
+      width: 100%;
+      background-color: #e2e8f0;
+      border: 1px solid var(--border-color);
+    }
+    .map-controls-bar {
+      background-color: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-bottom: none;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .map-filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .control-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .select-input, .text-input {
+      font-family: var(--font-system);
+      font-size: 12px;
+      padding: 5px 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 2px;
+      background-color: #ffffff;
+      color: var(--text-main);
+    }
+
+    /* Video Telemetry Canvas */
+    .canvas-container {
+      position: relative;
+      background-color: #0b1a29;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      height: 400px;
+    }
+    #telemetry-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .telemetry-overlay-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      background-color: rgba(15, 36, 56, 0.95);
+      border-bottom: 1px solid #204569;
+      padding: 6px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #cbd5e1;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      z-index: 10;
+    }
+    .telemetry-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: rgba(15, 36, 56, 0.95);
+      border-top: 1px solid #204569;
+      padding: 6px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #94a3b8;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      z-index: 10;
+    }
+
+    /* Data Tables: Strict tabular layout */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border-color);
+      background-color: #ffffff;
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+    table.data-table th {
+      background-color: var(--bg-subtle);
+      color: var(--text-main);
+      font-weight: 700;
+      padding: 10px 12px;
+      border-bottom: 2px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+    table.data-table th:last-child {
+      border-right: none;
+    }
+    table.data-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+    table.data-table td:last-child {
+      border-right: none;
+    }
+    table.data-table tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+    table.data-table tr:hover {
+      background-color: #f1f5f9;
+    }
+    .mono {
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    /* Architecture Flow Grid */
+    .arch-flow-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background-color: var(--border-color);
+      border: 1px solid var(--border-color);
+      margin-bottom: 20px;
+    }
+    @media (max-width: 900px) {
+      .arch-flow-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .arch-step-box {
+      background-color: #ffffff;
+      padding: 16px;
+    }
+    .arch-step-number {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--brand-navy);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .arch-step-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+    .arch-step-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Operational Document Section (TOS, Privacy, Specs) */
+    .document-body {
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      padding: 24px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #334155;
+    }
+    .document-body h3 {
+      font-size: 16px;
+      color: var(--text-main);
+      margin: 18px 0 8px 0;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .document-body h3:first-child {
+      margin-top: 0;
+    }
+    .document-body p {
+      margin-bottom: 12px;
+    }
+    .document-body ul {
+      margin-bottom: 12px;
+      padding-left: 24px;
+    }
+    .document-body li {
+      margin-bottom: 6px;
+    }
+
+    /* Modal Windows */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(15, 23, 42, 0.7);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-window {
+      background-color: #ffffff;
+      border: 2px solid var(--brand-navy);
+      border-radius: 2px;
+      max-width: 800px;
+      width: 100%;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      background-color: var(--bg-header);
+      color: #ffffff;
+      padding: 12px 16px;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-content {
+      padding: 20px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .modal-footer {
+      background-color: var(--bg-subtle);
+      border-top: 1px solid var(--border-color);
+      padding: 10px 16px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Site Footer */
+    footer.site-footer {
+      background-color: var(--bg-header);
+      color: #94a3b8;
+      border-top: 2px solid var(--border-dark);
+      padding: 32px 24px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .footer-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 900px) {
+      .footer-inner {
+        grid-template-columns: 1fr;
+      }
+    }
+    .footer-col-title {
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #204569;
+      padding-bottom: 4px;
+    }
+    .footer-links {
+      list-style: none;
+    }
+    .footer-links li {
+      margin-bottom: 6px;
+    }
+    .footer-links a {
+      color: #cbd5e1;
+      text-decoration: none;
+    }
+    .footer-links a:hover {
+      color: #ffffff;
+      text-decoration: underline;
+    }
+    .footer-bottom-bar {
+      max-width: 1400px;
+      margin: 24px auto 0 auto;
+      padding-top: 16px;
+      border-top: 1px solid #1e3a5f;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    /* Clean Audio Indicator */
+    #audioStatusText {
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Utility Bar: Operational Metadata -->
+  <div class="top-utility-bar">
+    <div class="top-utility-left">
+      <span><span class="status-indicator-dot"></span>SYS-STATUS: OPERATIONAL</span>
+      <span>NODE: DELHI-NCR-CENTRAL-01</span>
+      <span>MODEL: YOLOv8n-INFERENCE-TENSORRT</span>
+      <span>FRAMEWORK: SPRING-BOOT-4 / FASTAPI</span>
+    </div>
+    <div class="top-utility-right">
+      <span id="systemClock">UTC: --:--:-- | IST: --:--:--</span>
+      <span>OPERATOR: MUNICIPAL-HQ-SECURE</span>
+    </div>
+  </div>
+
+  <!-- Main Institutional Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div>
+        <h1 class="brand-title">SURAKSHADRISHTI : SMART CITY SURVEILLANCE & INCIDENT DISPATCH PLATFORM</h1>
+        <div class="brand-subtitle">Municipal Edge AI Video Telemetry, Real-Time Threat Classification & Multi-Agency Dispatch Routing</div>
+      </div>
+      <div>
+        <button class="btn btn-secondary btn-sm" onclick="toggleAudioAlarm()" id="audioToggleBtn">
+          AUDIO ALARM: DISABLED (CLICK TO ENABLE)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Bar -->
+  <nav class="main-nav">
+    <div class="nav-inner">
+      <a href="#overview" class="nav-link active">SYSTEM OVERVIEW</a>
+      <a href="#incident-map-section" class="nav-link">GIS INCIDENT COMMAND MAP</a>
+      <a href="#telemetry-section" class="nav-link">AI TELEMETRY STREAM</a>
+      <a href="#incident-log-section" class="nav-link">ACTIVE DISPATCH QUEUE</a>
+      <a href="#architecture-section" class="nav-link">SYSTEM ARCHITECTURE</a>
+      <a href="#api-spec-section" class="nav-link">API SPECIFICATION</a>
+      <a href="#privacy-policy-section" class="nav-link">PRIVACY POLICY & DATA GOVERNANCE</a>
+      <a href="#terms-of-service-section" class="nav-link">TERMS OF SERVICE</a>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="container">
+
+    <!-- Operational Briefing Banner -->
+    <section id="overview" class="operational-banner">
+      <div>
+        <div class="banner-text-title">MUNICIPAL INCIDENT COMMAND NOTIFICATION</div>
+        <div class="banner-text-desc">
+          SurakshaDrishti continuously processes surveillance feeds from municipal IP-CCTV nodes using YOLOv8 deep neural networks. Verified incidents (vehicle crashes, pedestrian overcrowding, fire hazards, and perimeter breaches) are geo-referenced on the dispatch map and broadcast to emergency response units.
+        </div>
+      </div>
+      <div class="banner-actions">
+        <a href="#incident-map-section" class="btn btn-primary">GO TO LIVE MAP</a>
+        <a href="#telemetry-section" class="btn btn-secondary">INSPECT AI FEED</a>
+        <button class="btn btn-secondary" onclick="simulateNewIncident()">SIMULATE NEW INCIDENT</button>
+      </div>
+    </section>
+
+    <!-- Operational Metrics Summary Bar (4 Columns, Flat, No Shadow) -->
+    <section class="metrics-bar">
+      <div class="metric-card">
+        <div class="metric-label">ACTIVE INCIDENTS</div>
+        <div class="metric-value" id="metricTotalIncidents">5</div>
+        <div class="metric-footnote">Across 4 municipal monitoring sectors</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">CRITICAL SEVERITY</div>
+        <div class="metric-value" style="color: var(--status-critical);" id="metricCriticalIncidents">1</div>
+        <div class="metric-footnote">Requires immediate dispatch response</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">INSPECTION LATENCY</div>
+        <div class="metric-value" id="metricLatency">14.6 ms</div>
+        <div class="metric-footnote">YOLOv8 Edge inference cycle time</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">ACTIVE CCTV STREAMS</div>
+        <div class="metric-value" id="metricActiveStreams">12 / 12</div>
+        <div class="metric-footnote">100% video stream uptime</div>
+      </div>
+    </section>
+
+    <!-- PRODUCT DEMO 1: GIS Incident Command Map (Real Leaflet Interface) -->
+    <section id="incident-map-section" class="panel">
+      <div class="panel-header">
+        <div>LIVE GIS INCIDENT MAP : DELHI NCR SURVEILLANCE GRID</div>
+        <div>
+          <span class="badge badge-info">MAP SERVER: OPENSTREETMAP / LEAFLET</span>
+        </div>
+      </div>
+
+      <!-- Map Toolbar Controls -->
+      <div class="map-controls-bar">
+        <div class="map-filter-group">
+          <label class="control-label" for="filterSeverity">FILTER BY SEVERITY:</label>
+          <select id="filterSeverity" class="select-input" onchange="applyIncidentFilters()">
+            <option value="ALL">ALL SEVERITIES</option>
+            <option value="CRITICAL">CRITICAL ONLY</option>
+            <option value="HIGH">HIGH ONLY</option>
+            <option value="MEDIUM">MEDIUM ONLY</option>
+            <option value="LOW">LOW ONLY</option>
+          </select>
+        </div>
+
+        <div class="map-filter-group">
+          <label class="control-label" for="filterSector">SECTOR LOCATE:</label>
+          <select id="filterSector" class="select-input" onchange="panToSector(this.value)">
+            <option value="all">DELHI CENTRAL OVERVIEW</option>
+            <option value="cp">CONNAUGHT PLACE (CENTRAL)</option>
+            <option value="ig">INDIA GATE / RAJPATH</option>
+            <option value="av">ANAND VIHAR INTERCHANGE</option>
+            <option value="ring">OUTER RING ROAD SECTOR 7</option>
+          </select>
+        </div>
+
+        <div class="map-filter-group">
+          <button class="btn btn-secondary btn-sm" onclick="resetMapView()">RESET MAP CENTER</button>
+          <button class="btn btn-danger btn-sm" onclick="triggerTestAlarmSound()">TEST ALARM TONE</button>
+          <button class="btn btn-primary btn-sm" onclick="simulateNewIncident()">+ INJECT SIMULATION ALERT</button>
+        </div>
+      </div>
+
+      <!-- Map + Details Split Layout -->
+      <div class="grid-map-split" style="margin-bottom: 0;">
+        <div id="incident-map"></div>
+
+        <div style="background-color: var(--bg-subtle); border-left: 1px solid var(--border-color); padding: 16px; overflow-y: auto; max-height: 520px;">
+          <div style="font-weight: 700; font-size: 13px; color: var(--brand-navy); margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+            SELECTED INCIDENT DOSSIER
+          </div>
+          <div id="incidentDossier">
+            <p style="color: var(--text-muted); font-size: 12px;">Click any marker on the map to inspect telemetry details, confidence scoring, coordinates, and dispatch response commands.</p>
+          </div>
+
+          <div style="margin-top: 20px; font-weight: 700; font-size: 13px; color: var(--brand-navy); margin-bottom: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
+            SEVERITY REFERENCE CODES
+          </div>
+          <div style="font-size: 12px; line-height: 1.8;">
+            <div><span class="badge badge-critical">CRITICAL</span> Fire hazard, multi-vehicle pileup, armed breach</div>
+            <div><span class="badge badge-high">HIGH</span> Crowd stampede risk, lane blockage</div>
+            <div><span class="badge badge-medium">MEDIUM</span> Vehicle breakdown, restricted curb parking</div>
+            <div><span class="badge badge-low">LOW</span> Minor pedestrian congestion, loitering</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-footer">
+        Geospatial reference coordinates: WGS84 datum. Tile server latency: 22ms. Connected to Spring Boot endpoint: <code>/api/detections/active</code>
+      </div>
+    </section>
+
+    <!-- PRODUCT DEMO 2: Real-Time Edge Vision Telemetry (Functional Canvas Simulator) -->
+    <section id="telemetry-section" class="panel">
+      <div class="panel-header">
+        <div>LIVE COMPUTER VISION INFERENCE CONSOLE : YOLOv8 DETECTIONS</div>
+        <div>
+          <span class="badge badge-low" id="streamStatusBadge">STREAM STATUS: ACTIVE (30.0 FPS)</span>
+        </div>
+      </div>
+
+      <!-- Telemetry Control Bar -->
+      <div class="map-controls-bar">
+        <div class="map-filter-group">
+          <label class="control-label" for="cameraSelect">CAMERA FEED:</label>
+          <select id="cameraSelect" class="select-input" onchange="switchCamera(this.value)">
+            <option value="cam-01">CAM-01 : CONNAUGHT CIRCUS NORTH CONCOURSE (CROWD)</option>
+            <option value="cam-02">CAM-02 : RING ROAD JUNCTION UNDERPASS (TRAFFIC)</option>
+            <option value="cam-03">CAM-03 : ANAND VIHAR TRANSIT GATEWAY (DENSITY)</option>
+            <option value="cam-04">CAM-04 : SECTOR 4 MUNICIPAL DEPOT (PERIMETER & SMOKE)</option>
+          </select>
+        </div>
+
+        <div class="map-filter-group">
+          <label class="control-label"><input type="checkbox" id="chkBoxes" checked onchange="toggleOverlay('boxes')"> BOUNDING BOXES</label>
+          <label class="control-label"><input type="checkbox" id="chkLabels" checked onchange="toggleOverlay('labels')"> CONFIDENCE LABELS</label>
+          <label class="control-label"><input type="checkbox" id="chkCentroids" checked onchange="toggleOverlay('centroids')"> TRACKING CENTROIDS</label>
+        </div>
+
+        <div class="map-filter-group">
+          <button class="btn btn-secondary btn-sm" onclick="toggleStreamPause()" id="btnStreamPause">PAUSE FEED</button>
+          <button class="btn btn-danger btn-sm" onclick="triggerSimulatedVisionThreat()">TRIGGER VISION THREAT EVENT</button>
+        </div>
+      </div>
+
+      <!-- Canvas Feed Viewport -->
+      <div class="canvas-container">
+        <div class="telemetry-overlay-bar">
+          <div><span id="canvasCamName">CAM-01 : CONNAUGHT CIRCUS NORTH CONCOURSE</span></div>
+          <div>INFERENCE: 14.2ms | RESOLUTION: 1920x1080 | BACKEND: PYTORCH / TENSORRT</div>
+        </div>
+
+        <canvas id="telemetry-canvas" width="960" height="400"></canvas>
+
+        <div class="telemetry-bottom-bar">
+          <div id="canvasCounts">DETECTED OBJECTS: 9 PERSONS, 3 VEHICLES, 0 THREAT ANOMALIES</div>
+          <div>CONFIDENCE THRESHOLD: 0.65 | IOU THRESHOLD: 0.45</div>
+        </div>
+      </div>
+
+      <div class="panel-footer">
+        Frame processing executed at 640x640 tensor input dimensions. Direct integration available with <code>AIfile.py</code> on FastAPI port 5000 via RTSP stream ingestion.
+      </div>
+    </section>
+
+    <!-- INCIDENT LOG & DISPATCH QUEUE: Tabular Data View (No Cards) -->
+    <section id="incident-log-section" class="panel">
+      <div class="panel-header">
+        <div>ACTIVE INCIDENT DISPATCH QUEUE & AUDIT LOG</div>
+        <div>
+          <button class="btn btn-secondary btn-sm" onclick="exportIncidentsToCSV()">EXPORT QUEUE TO CSV</button>
+          <button class="btn btn-secondary btn-sm" onclick="clearResolvedIncidents()">PURGE RESOLVED</button>
+        </div>
+      </div>
+
+      <div class="panel-body" style="padding: 0;">
+        <div class="table-container">
+          <table class="data-table" id="incidentsTable">
+            <thead>
+              <tr>
+                <th>INCIDENT ID</th>
+                <th>TIMESTAMP</th>
+                <th>MONITORING LOCATION</th>
+                <th>CLASSIFICATION</th>
+                <th>SEVERITY</th>
+                <th>CONFIDENCE</th>
+                <th>COORDINATES (LAT, LNG)</th>
+                <th>DISPATCH STATUS</th>
+                <th>OPERATOR ACTION</th>
+              </tr>
+            </thead>
+            <tbody id="incidentsTableBody">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel-footer">
+        Showing all synchronized municipal alerts. All operator resolutions generate an immutable audit log timestamp.
+      </div>
+    </section>
+
+    <!-- SYSTEM ARCHITECTURE & DATA FLOW SPECIFICATION -->
+    <section id="architecture-section" class="panel">
+      <div class="panel-header">
+        <div>SYSTEM ARCHITECTURE & MULTI-TIER DATA PIPELINE</div>
+        <div>
+          <span class="badge badge-neutral">SPECIFICATION: IEEE / MUNICIPAL ENTERPRISE</span>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <div class="arch-flow-grid">
+          <div class="arch-step-box">
+            <div class="arch-step-number">STAGE 1: INGESTION</div>
+            <div class="arch-step-title">IP-CCTV RTSP Decoding</div>
+            <div class="arch-step-desc">
+              H.264/H.265 transport streams captured via OpenCV at municipal camera nodes. Frame decimation at 30 FPS with buffer queue isolation.
+            </div>
+          </div>
+          <div class="arch-step-box">
+            <div class="arch-step-number">STAGE 2: INFERENCE</div>
+            <div class="arch-step-title">YOLOv8 Edge Classifier</div>
+            <div class="arch-step-desc">
+              Custom-trained weights (yolov8n.pt) executed on NVIDIA TensorRT / CUDA runtime. Real-time inference classifies objects, crowd density thresholds, and thermal fire signatures.
+            </div>
+          </div>
+          <div class="arch-step-box">
+            <div class="arch-step-number">STAGE 3: DISPATCH HUB</div>
+            <div class="arch-step-title">Spring Boot 4 Telemetry</div>
+            <div class="arch-step-desc">
+              High-throughput Java microservice aggregates detections, validates confidence thresholds, and stores records with spatial indexes in MySQL.
+            </div>
+          </div>
+          <div class="arch-step-box">
+            <div class="arch-step-number">STAGE 4: RESPONSE</div>
+            <div class="arch-step-title">GIS Triage & Audio Alert</div>
+            <div class="arch-step-desc">
+              Leaflet interface plots incident pins with sub-second WebSocket updates. Automated audio synthesizer and SMS gateway alert police, fire, or EMS.
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px;">
+          <div style="font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--brand-navy);">
+            TECHNICAL RUNTIME SPECIFICATIONS
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>SUBSYSTEM</th>
+                  <th>TECHNOLOGY</th>
+                  <th>HOSTING PORT</th>
+                  <th>LATENCY / THROUGHPUT</th>
+                  <th>FAILOVER REDUNDANCY</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Edge Vision Inference Engine</td>
+                  <td>Python 3.10+, PyTorch, Ultralytics YOLOv8, OpenCV</td>
+                  <td class="mono">TCP 5000 (FastAPI)</td>
+                  <td class="mono">14.6 ms / frame (68 FPS max)</td>
+                  <td>Dual edge worker fallback</td>
+                </tr>
+                <tr>
+                  <td>Central Incident Backend</td>
+                  <td>Java 17, Spring Boot 4, Spring Data JPA</td>
+                  <td class="mono">TCP 8080 (REST / WS)</td>
+                  <td class="mono">&lt; 8 ms query latency</td>
+                  <td>Stateless container replica</td>
+                </tr>
+                <tr>
+                  <td>Geospatial Command Console</td>
+                  <td>Leaflet 1.9, Vanilla JavaScript, HTML5 Canvas</td>
+                  <td class="mono">TCP 3000 / Vercel Edge</td>
+                  <td class="mono">Instant DOM update</td>
+                  <td>Multi-CDN edge deployment</td>
+                </tr>
+                <tr>
+                  <td>Persistent Storage Layer</td>
+                  <td>MySQL 8.0 with Spatial Geospatial Extensions</td>
+                  <td class="mono">TCP 3306</td>
+                  <td class="mono">ACID compliant audit logs</td>
+                  <td>Automated WAL replication</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- API SPECIFICATION SECTION -->
+    <section id="api-spec-section" class="panel">
+      <div class="panel-header">
+        <div>MUNICIPAL INTEGRATION REST API ENDPOINTS</div>
+        <div>
+          <span class="badge badge-neutral">OPENAPI v3.0 COMPLIANT</span>
+        </div>
+      </div>
+
+      <div class="panel-body" style="padding: 0;">
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>HTTP METHOD</th>
+                <th>ENDPOINT ROUTE</th>
+                <th>PAYLOAD FORMAT</th>
+                <th>DESCRIPTION</th>
+                <th>ACCESS LEVEL</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge badge-low">GET</span></td>
+                <td class="mono">/api/detections/active</td>
+                <td class="mono">JSON Array</td>
+                <td>Returns all unresolved incidents with coordinates, confidence, and severity scores.</td>
+                <td>Public / Field Unit</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-high">POST</span></td>
+                <td class="mono">/api/detections/report</td>
+                <td class="mono">JSON Object</td>
+                <td>Accepts real-time inference payloads from edge camera units.</td>
+                <td>Edge Node Authorized</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-info">PUT</span></td>
+                <td class="mono">/api/detections/resolve/{id}</td>
+                <td class="mono">Empty Body</td>
+                <td>Marks an active incident as resolved and appends operator ID to audit trail.</td>
+                <td>Dispatch Officer</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-low">GET</span></td>
+                <td class="mono">/api/system/health</td>
+                <td class="mono">JSON Health Object</td>
+                <td>System heartbeat, GPU utilization, and camera stream status indicators.</td>
+                <td>Monitoring Daemon</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- DATA PRIVACY POLICY & COMPLIANCE -->
+    <section id="privacy-policy-section" class="panel">
+      <div class="panel-header">
+        <div>PRIVACY POLICY & MUNICIPAL DATA GOVERNANCE</div>
+        <div>
+          <span class="badge badge-low">COMPLIANT WITH DPDP ACT 2023 & GDPR PRINCIPLES</span>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <div class="document-body">
+          <h3>1. Edge-Based Anonymization and Data Minimization</h3>
+          <p>
+            SurakshaDrishti operates under strict data minimization guidelines. All incoming video feeds are processed in volatile memory (RAM) at edge gateways. Automated algorithms blur recognizable facial features and cryptographic one-way hashes are applied to vehicle registration plates prior to telemetry generation.
+          </p>
+
+          <h3>2. Rolling Retention and Automated Purge Cycles</h3>
+          <p>
+            Raw video frames that contain no classified incident threats are immediately overwritten in circular frame buffers and are never committed to permanent disk storage. When an active threat is verified (e.g. fire hazard, major collision), only the corresponding 15-second contextual incident clip is stored for municipal review, with an automated 72-hour purge policy unless subpoenaed by law enforcement.
+          </p>
+
+          <h3>3. Zero Biometric Profiling Commitment</h3>
+          <p>
+            The computer vision models deployed in SurakshaDrishti (YOLOv8 architecture) are strictly trained for object identification (vehicles, smoke, crowd volumes, safety hazards). The system contains zero facial recognition models, demographic classification weights, or behavioral tracking algorithms targeting individuals.
+          </p>
+
+          <h3>4. Independent Audit Log Verification</h3>
+          <p>
+            All operator actions, dispatch commands, and video inspection events are recorded in an append-only cryptographic ledger. Municipal oversight committees maintain read-only audit privileges to verify compliance with privacy guidelines.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TERMS OF SERVICE -->
+    <section id="terms-of-service-section" class="panel">
+      <div class="panel-header">
+        <div>TERMS OF SERVICE : MUNICIPAL PLATFORM OPERATING AGREEMENT</div>
+        <div>
+          <span class="badge badge-neutral">DOCUMENT REF: MUNI-SDR-TOS-2026</span>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <div class="document-body">
+          <h3>1. Authorized Municipal and Emergency Personnel Usage</h3>
+          <p>
+            Access to the SurakshaDrishti platform is restricted to credentialed municipal operators, traffic dispatchers, police emergency command centers, and authorized civic administration personnel. Unauthorized access attempts are monitored and reported in accordance with applicable cybersecurity legislation.
+          </p>
+
+          <h3>2. AI Decision Support and Human-in-the-Loop Protocol</h3>
+          <p>
+            SurakshaDrishti provides computer-vision-assisted decision support. Automated severity classifications and route recommendations are intended to aid dispatch personnel. All critical interventions, physical agency dispatches, and emergency sirens require verification by a human operator in accordance with the Municipal Command Protocol.
+          </p>
+
+          <h3>3. Evidentiary Standards and Chain of Custody</h3>
+          <p>
+            Incident logs exported via this system include UTC timestamps, GPS telemetry, and algorithm confidence metrics. When utilized for official traffic collision reports or municipal inquiry, exported files must maintain digital signature validation.
+          </p>
+
+          <h3>4. System Availability and Service Level Objective (SLO)</h3>
+          <p>
+            The platform architecture guarantees a 99.9% uptime target for telemetry ingestion, with an edge failover time not exceeding 500 milliseconds in the event of primary camera node disconnection.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <div class="footer-col-title">SURAKSHADRISHTI PLATFORM</div>
+        <p style="margin-bottom: 8px;">
+          An advanced municipal public safety platform combining deep learning edge video intelligence, microservice alert routing, and open geospatial incident command.
+        </p>
+        <p style="color: #64748b;">
+          Repository: <a href="https://github.com/Nakul14052006/SmartCityAI-project" target="_blank" rel="noopener">github.com/Nakul14052006/SmartCityAI-project</a>
+        </p>
+      </div>
+
+      <div>
+        <div class="footer-col-title">DOCUMENTATION</div>
+        <ul class="footer-links">
+          <li><a href="#overview">System Overview</a></li>
+          <li><a href="#incident-map-section">GIS Incident Map</a></li>
+          <li><a href="#telemetry-section">AI Telemetry Stream</a></li>
+          <li><a href="#architecture-section">Architecture Specification</a></li>
+          <li><a href="#api-spec-section">REST API Endpoints</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="footer-col-title">GOVERNANCE & LEGAL</div>
+        <ul class="footer-links">
+          <li><a href="#privacy-policy-section">Privacy Policy</a></li>
+          <li><a href="#terms-of-service-section">Terms of Service</a></li>
+          <li><a href="#privacy-policy-section">Edge Data Anonymization</a></li>
+          <li><a href="#architecture-section">Hardware & Network SLAs</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="footer-col-title">SYSTEM STATUS</div>
+        <p style="margin-bottom: 4px;">Primary Edge Cluster: ONLINE</p>
+        <p style="margin-bottom: 4px;">Inference Latency: 14.6 ms</p>
+        <p style="margin-bottom: 4px;">Spring Boot REST: CONNECTED</p>
+        <p style="margin-bottom: 4px;">Leaflet GIS: ACTIVE</p>
+        <p style="margin-top: 8px; color: #64748b;">Build: v2.4.0 (Hackathon Release)</p>
+      </div>
+    </div>
+
+    <div class="footer-bottom-bar">
+      <div>SurakshaDrishti Municipal Intelligence Platform. Released under Open Municipal License.</div>
+      <div>Designed for Hackathon Demonstration and Civic Technology Deployment.</div>
+    </div>
+  </footer>
+
+  <!-- Leaflet GIS Script -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Application Logic -->
+  <script>
+    /* ==========================================================================
+       DATA STORE: Operational Incidents
+       ========================================================================== */
+    let incidents = [
+      {
+        id: "INC-2026-0841",
+        timestamp: "2026-10-04 14:12:05",
+        location: "Ring Road Sector 7 Underpass",
+        sector: "ring",
+        threatType: "Multi-Vehicle Collision with Fuel Hazard",
+        severity: "CRITICAL",
+        confidence: 0.94,
+        lat: 28.6250,
+        lng: 77.2150,
+        status: "DISPATCHED",
+        details: "Two commercial vehicles collided. Automated thermal model detected smoke signature with high risk of obstruction. EMS unit 04 notified."
+      },
+      {
+        id: "INC-2026-0842",
+        timestamp: "2026-10-04 14:21:40",
+        location: "Connaught Circus North Concourse",
+        sector: "cp",
+        threatType: "Crowd Surge & Exit Density Exceeded",
+        severity: "HIGH",
+        confidence: 0.89,
+        lat: 28.6328,
+        lng: 77.2195,
+        status: "ACTIVE",
+        details: "Pedestrian density reached 4.2 persons per square meter near Gate 3 metro stairwell. Crowd flow diversion advisory generated."
+      },
+      {
+        id: "INC-2026-0843",
+        timestamp: "2026-10-04 14:28:15",
+        location: "Anand Vihar Logistics Depot Gate 2",
+        sector: "av",
+        threatType: "Thermal Anomaly & Refuse Fire",
+        severity: "HIGH",
+        confidence: 0.91,
+        lat: 28.6480,
+        lng: 77.3150,
+        status: "ACTIVE",
+        details: "Localized fire signature detected in waste collection hopper. Fire tender 12 auto-routed from East Sector Station."
+      },
+      {
+        id: "INC-2026-0844",
+        timestamp: "2026-10-04 14:35:50",
+        location: "India Gate Boulevard C-Hexagon",
+        sector: "ig",
+        threatType: "Unauthorized Vehicle Stoppage",
+        severity: "MEDIUM",
+        confidence: 0.86,
+        lat: 28.6129,
+        lng: 77.2295,
+        status: "ACTIVE",
+        details: "Stationary vehicle blocking primary bus transit corridor for over 180 seconds. Traffic patrol unit alerted."
+      },
+      {
+        id: "INC-2026-0845",
+        timestamp: "2026-10-04 14:41:10",
+        location: "Municipal Substation Perimeter",
+        sector: "cp",
+        threatType: "Restricted Zone Loitering",
+        severity: "LOW",
+        confidence: 0.78,
+        lat: 28.6380,
+        lng: 77.2100,
+        status: "ACTIVE",
+        details: "Individual detected within restricted transformer yard perimeter. Security checkpoint audio announcement triggered."
+      }
+    ];
+
+    /* ==========================================================================
+       SYSTEM CLOCK (UTC and IST)
+       ========================================================================== */
+    function updateClocks() {
+      const now = new Date();
+      const utcStr = now.toUTCString().split(" ")[4];
+      const istStr = now.toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata" });
+      const clockEl = document.getElementById("systemClock");
+      if (clockEl) {
+        clockEl.textContent = `UTC: ${utcStr} | IST: ${istStr}`;
+      }
+    }
+    setInterval(updateClocks, 1000);
+    updateClocks();
+
+    /* ==========================================================================
+       AUDIO ALARM SYSTEM (Web Audio API Synthesizer - 100% Reliable)
+       ========================================================================== */
+    let audioContext = null;
+    let alarmActive = false;
+    let alarmEnabled = false;
+
+    function initAudioContext() {
+      if (!audioContext) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        audioContext = new AudioCtx();
+      }
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+    }
+
+    function toggleAudioAlarm() {
+      initAudioContext();
+      alarmEnabled = !alarmEnabled;
+      const btn = document.getElementById("audioToggleBtn");
+      if (alarmEnabled) {
+        btn.textContent = "AUDIO ALARM: ENABLED (CLICK TO MUTE)";
+        btn.classList.remove("btn-secondary");
+        btn.classList.add("btn-danger");
+        playTone(660, 0.15);
+      } else {
+        btn.textContent = "AUDIO ALARM: DISABLED (CLICK TO ENABLE)";
+        btn.classList.remove("btn-danger");
+        btn.classList.add("btn-secondary");
+      }
+    }
+
+    function playTone(freq, duration) {
+      if (!alarmEnabled || !audioContext) return;
+      try {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.type = "square";
+        osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+        gain.gain.setValueAtTime(0.12, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        osc.start();
+        osc.stop(audioContext.currentTime + duration);
+      } catch (e) {
+        console.error("Audio tone playback exception:", e);
+      }
+    }
+
+    function triggerTestAlarmSound() {
+      initAudioContext();
+      if (!alarmEnabled) {
+        alarmEnabled = true;
+        const btn = document.getElementById("audioToggleBtn");
+        btn.textContent = "AUDIO ALARM: ENABLED (CLICK TO MUTE)";
+        btn.classList.remove("btn-secondary");
+        btn.classList.add("btn-danger");
+      }
+      playTone(880, 0.2);
+      setTimeout(() => playTone(660, 0.2), 220);
+      setTimeout(() => playTone(880, 0.2), 440);
+      
+      if ('speechSynthesis' in window) {
+        const utter = new SpeechSynthesisUtterance("Test alarm initiated. Incident dispatch routing operational.");
+        utter.rate = 1.0;
+        window.speechSynthesis.speak(utter);
+      }
+    }
+
+    /* ==========================================================================
+       LEAFLET GIS INCIDENT COMMAND MAP
+       ========================================================================== */
+    let map = null;
+    let markersLayer = null;
+
+    function getSeverityHex(severity) {
+      switch (severity) {
+        case "CRITICAL": return "#b91c1c";
+        case "HIGH": return "#c2410c";
+        case "MEDIUM": return "#b45309";
+        case "LOW": return "#15803d";
+        default: return "#0369a1";
+      }
+    }
+
+    function initMap() {
+      const mapContainer = document.getElementById("incident-map");
+      if (!mapContainer) return;
+
+      map = L.map("incident-map", {
+        zoomControl: true,
+        attributionControl: true
+      }).setView([28.6250, 77.2200], 13);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 18,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
+      markersLayer = L.layerGroup().addTo(map);
+      renderIncidentsOnMap();
+    }
+
+    function renderIncidentsOnMap() {
+      if (!map || !markersLayer) return;
+      markersLayer.clearLayers();
+
+      const sevFilter = document.getElementById("filterSeverity") ? document.getElementById("filterSeverity").value : "ALL";
+
+      incidents.forEach(item => {
+        if (sevFilter !== "ALL" && item.severity !== sevFilter) return;
+
+        const color = getSeverityHex(item.severity);
+        const radius = item.severity === "CRITICAL" ? 11 : (item.severity === "HIGH" ? 9 : 7);
+
+        const marker = L.circleMarker([item.lat, item.lng], {
+          radius: radius,
+          fillColor: color,
+          color: "#ffffff",
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.95
+        });
+
+        marker.bindPopup(`
+          <div style="font-family: var(--font-system); font-size: 12px; line-height: 1.5; min-width: 200px;">
+            <div style="font-weight: 700; color: ${color}; margin-bottom: 4px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px;">
+              [${item.severity}] ${item.threatType}
+            </div>
+            <div><b>Incident ID:</b> ${item.id}</div>
+            <div><b>Location:</b> ${item.location}</div>
+            <div><b>Confidence:</b> ${(item.confidence * 100).toFixed(1)}%</div>
+            <div><b>Status:</b> ${item.status}</div>
+            <div style="margin-top: 8px;">
+              <button onclick="resolveIncident('${item.id}')" style="background-color: #1b365d; color: white; border: 1px solid #122540; padding: 4px 8px; font-size: 11px; font-weight: 600; cursor: pointer; border-radius: 2px;">
+                MARK AS RESOLVED
+              </button>
+            </div>
+          </div>
+        `);
+
+        marker.on("click", () => {
+          showIncidentDossier(item);
+        });
+
+        marker.addTo(markersLayer);
+      });
+    }
+
+    function showIncidentDossier(item) {
+      const container = document.getElementById("incidentDossier");
+      if (!container) return;
+
+      const badgeClass = `badge-${item.severity.toLowerCase()}`;
+      container.innerHTML = `
+        <div style="border: 1px solid var(--border-color); background-color: #ffffff; padding: 12px; border-radius: 2px; font-size: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span class="mono" style="font-weight: 700;">${item.id}</span>
+            <span class="badge ${badgeClass}">${item.severity}</span>
+          </div>
+          <div style="font-weight: 700; font-size: 13px; color: var(--text-main); margin-bottom: 6px;">
+            ${item.threatType}
+          </div>
+          <p style="color: var(--text-muted); margin-bottom: 8px;">${item.details}</p>
+          <div style="font-size: 11px; color: var(--text-subtle); line-height: 1.6; border-top: 1px solid #e2e8f0; padding-top: 6px;">
+            <div><b>Location:</b> ${item.location}</div>
+            <div><b>Coordinates:</b> ${item.lat.toFixed(4)}, ${item.lng.toFixed(4)}</div>
+            <div><b>Confidence Score:</b> ${(item.confidence * 100).toFixed(1)}% (YOLOv8)</div>
+            <div><b>Logged:</b> ${item.timestamp}</div>
+            <div><b>Operational Status:</b> ${item.status}</div>
+          </div>
+          <div style="margin-top: 10px; display: flex; gap: 6px;">
+            <button class="btn btn-primary btn-sm" onclick="resolveIncident('${item.id}')">RESOLVE INCIDENT</button>
+            <button class="btn btn-secondary btn-sm" onclick="dispatchEmergencyServices('${item.id}')">DISPATCH EMS / POLICE</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function applyIncidentFilters() {
+      renderIncidentsOnMap();
+      renderIncidentsTable();
+    }
+
+    function panToSector(val) {
+      if (!map) return;
+      switch (val) {
+        case "cp":
+          map.setView([28.6328, 77.2195], 15);
+          break;
+        case "ig":
+          map.setView([28.6129, 77.2295], 15);
+          break;
+        case "av":
+          map.setView([28.6480, 77.3150], 14);
+          break;
+        case "ring":
+          map.setView([28.6250, 77.2150], 15);
+          break;
+        default:
+          map.setView([28.6250, 77.2200], 13);
+      }
+    }
+
+    function resetMapView() {
+      if (map) map.setView([28.6250, 77.2200], 13);
+    }
+
+    function resolveIncident(id) {
+      const idx = incidents.findIndex(i => i.id === id);
+      if (idx !== -1) {
+        incidents[idx].status = "RESOLVED";
+        renderIncidentsOnMap();
+        renderIncidentsTable();
+        updateSummaryMetrics();
+        showIncidentDossier(incidents[idx]);
+        if ('speechSynthesis' in window) {
+          const utter = new SpeechSynthesisUtterance(`Incident ${id} marked as resolved.`);
+          window.speechSynthesis.speak(utter);
+        }
+      }
+    }
+
+    function dispatchEmergencyServices(id) {
+      const idx = incidents.findIndex(i => i.id === id);
+      if (idx !== -1) {
+        incidents[idx].status = "DISPATCHED";
+        renderIncidentsTable();
+        updateSummaryMetrics();
+        showIncidentDossier(incidents[idx]);
+        alert(`Emergency dispatch routed for ${id}. Unit en route.`);
+      }
+    }
+
+    function clearResolvedIncidents() {
+      incidents = incidents.filter(i => i.status !== "RESOLVED");
+      renderIncidentsOnMap();
+      renderIncidentsTable();
+      updateSummaryMetrics();
+    }
+
+    function simulateNewIncident() {
+      initAudioContext();
+      const count = incidents.length + 1;
+      const id = `INC-2026-08${count < 10 ? '0' + count : count}`;
+      const now = new Date();
+      const timeStr = now.toISOString().replace("T", " ").substring(0, 19);
+      
+      const newInc = {
+        id: id,
+        timestamp: timeStr,
+        location: "Kasturba Gandhi Marg Intersection",
+        sector: "cp",
+        threatType: "Sudden Vehicle Stoppage & Pedestrian Congestion",
+        severity: "HIGH",
+        confidence: 0.92,
+        lat: 28.6260 + (Math.random() - 0.5) * 0.015,
+        lng: 77.2220 + (Math.random() - 0.5) * 0.015,
+        status: "ACTIVE",
+        details: "Automated vision sensor registered abrupt velocity drop and surrounding crowd assembly. Triage generated."
+      };
+
+      incidents.unshift(newInc);
+      renderIncidentsOnMap();
+      renderIncidentsTable();
+      updateSummaryMetrics();
+      showIncidentDossier(newInc);
+
+      if (map) {
+        map.setView([newInc.lat, newInc.lng], 15);
+      }
+
+      playTone(880, 0.25);
+      if ('speechSynthesis' in window && alarmEnabled) {
+        const utter = new SpeechSynthesisUtterance(`New high priority incident detected at ${newInc.location}.`);
+        window.speechSynthesis.speak(utter);
+      }
+    }
+
+    /* ==========================================================================
+       INCIDENT DATA TABLE
+       ========================================================================== */
+    function renderIncidentsTable() {
+      const tbody = document.getElementById("incidentsTableBody");
+      if (!tbody) return;
+
+      const sevFilter = document.getElementById("filterSeverity") ? document.getElementById("filterSeverity").value : "ALL";
+
+      tbody.innerHTML = "";
+      incidents.forEach(item => {
+        if (sevFilter !== "ALL" && item.severity !== sevFilter) return;
+
+        const badgeClass = `badge-${item.severity.toLowerCase()}`;
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td class="mono"><strong>${item.id}</strong></td>
+          <td class="mono">${item.timestamp}</td>
+          <td>${item.location}</td>
+          <td>${item.threatType}</td>
+          <td><span class="badge ${badgeClass}">${item.severity}</span></td>
+          <td class="mono">${(item.confidence * 100).toFixed(1)}%</td>
+          <td class="mono">${item.lat.toFixed(4)}, ${item.lng.toFixed(4)}</td>
+          <td>
+            <span class="badge ${item.status === 'RESOLVED' ? 'badge-low' : (item.status === 'DISPATCHED' ? 'badge-info' : 'badge-high')}">
+              ${item.status}
+            </span>
+          </td>
+          <td>
+            ${item.status === 'RESOLVED' 
+              ? '<span style="color: var(--text-muted); font-size: 11px;">CLOSED</span>'
+              : `<button class="btn btn-secondary btn-sm" onclick="resolveIncident('${item.id}')">RESOLVE</button>`
+            }
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updateSummaryMetrics() {
+      const totalEl = document.getElementById("metricTotalIncidents");
+      const critEl = document.getElementById("metricCriticalIncidents");
+      if (totalEl) {
+        const activeCount = incidents.filter(i => i.status !== "RESOLVED").length;
+        totalEl.textContent = activeCount;
+      }
+      if (critEl) {
+        const critCount = incidents.filter(i => i.severity === "CRITICAL" && i.status !== "RESOLVED").length;
+        critEl.textContent = critCount;
+      }
+    }
+
+    function exportIncidentsToCSV() {
+      let csv = "IncidentID,Timestamp,Location,ThreatType,Severity,Confidence,Latitude,Longitude,Status\n";
+      incidents.forEach(i => {
+        csv += `"${i.id}","${i.timestamp}","${i.location}","${i.threatType}","${i.severity}",${i.confidence},${i.lat},${i.lng},"${i.status}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `suraksha_incidents_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    /* ==========================================================================
+       CANVAS COMPUTER VISION TELEMETRY SIMULATOR
+       ========================================================================== */
+    const canvas = document.getElementById("telemetry-canvas");
+    let ctx = canvas ? canvas.getContext("2d") : null;
+    let streamPaused = false;
+    let showBoxes = true;
+    let showLabels = true;
+    let showCentroids = true;
+    let activeCamera = "cam-01";
+    let threatEventActive = false;
+
+    // Simulation entities
+    let simulatedObjects = [];
+
+    function initSimulatedObjects() {
+      simulatedObjects = [
+        { id: 101, class: "car", x: 120, y: 190, w: 90, h: 50, vx: 1.8, vy: 0, conf: 0.94 },
+        { id: 102, class: "car", x: 380, y: 240, w: 95, h: 54, vx: -1.5, vy: 0, conf: 0.92 },
+        { id: 103, class: "truck", x: 620, y: 210, w: 140, h: 70, vx: -1.2, vy: 0, conf: 0.96 },
+        { id: 201, class: "person", x: 260, y: 130, w: 22, h: 48, vx: 0.5, vy: 0.2, conf: 0.88 },
+        { id: 202, class: "person", x: 290, y: 125, w: 20, h: 46, vx: -0.4, vy: -0.1, conf: 0.85 },
+        { id: 203, class: "person", x: 330, y: 135, w: 24, h: 50, vx: 0.3, vy: 0.1, conf: 0.91 },
+        { id: 204, class: "person", x: 450, y: 140, w: 22, h: 46, vx: 0.4, vy: 0.0, conf: 0.87 },
+        { id: 205, class: "motorcycle", x: 210, y: 260, w: 50, h: 35, vx: 2.2, vy: 0, conf: 0.89 },
+        { id: 301, class: "person", x: 740, y: 150, w: 22, h: 46, vx: -0.3, vy: 0.1, conf: 0.84 }
+      ];
+    }
+    initSimulatedObjects();
+
+    function switchCamera(camKey) {
+      activeCamera = camKey;
+      const camLabelMap = {
+        "cam-01": "CAM-01 : CONNAUGHT CIRCUS NORTH CONCOURSE (CROWD)",
+        "cam-02": "CAM-02 : RING ROAD JUNCTION UNDERPASS (TRAFFIC)",
+        "cam-03": "CAM-03 : ANAND VIHAR TRANSIT GATEWAY (DENSITY)",
+        "cam-04": "CAM-04 : SECTOR 4 MUNICIPAL DEPOT (PERIMETER & SMOKE)"
+      };
+      document.getElementById("canvasCamName").textContent = camLabelMap[camKey] || camKey;
+      threatEventActive = false;
+      initSimulatedObjects();
+    }
+
+    function toggleOverlay(type) {
+      if (type === "boxes") showBoxes = document.getElementById("chkBoxes").checked;
+      if (type === "labels") showLabels = document.getElementById("chkLabels").checked;
+      if (type === "centroids") showCentroids = document.getElementById("chkCentroids").checked;
+    }
+
+    function toggleStreamPause() {
+      streamPaused = !streamPaused;
+      const btn = document.getElementById("btnStreamPause");
+      const badge = document.getElementById("streamStatusBadge");
+      if (streamPaused) {
+        btn.textContent = "RESUME FEED";
+        badge.textContent = "STREAM STATUS: PAUSED";
+        badge.className = "badge badge-neutral";
+      } else {
+        btn.textContent = "PAUSE FEED";
+        badge.textContent = "STREAM STATUS: ACTIVE (30.0 FPS)";
+        badge.className = "badge badge-low";
+      }
+    }
+
+    function triggerSimulatedVisionThreat() {
+      threatEventActive = true;
+      initAudioContext();
+      playTone(880, 0.3);
+
+      // Inject stopped collision vehicles
+      simulatedObjects.push({
+        id: 999,
+        class: "ANOMALY_COLLISION",
+        x: 420,
+        y: 200,
+        w: 110,
+        h: 60,
+        vx: 0,
+        vy: 0,
+        conf: 0.97
+      });
+
+      if ('speechSynthesis' in window && alarmEnabled) {
+        const utter = new SpeechSynthesisUtterance("Telemetry alert. Vision model classified obstacle blockage on active camera stream.");
+        window.speechSynthesis.speak(utter);
+      }
+    }
+
+    function renderTelemetryLoop() {
+      if (!ctx || !canvas) return;
+
+      if (!streamPaused) {
+        // Draw background urban blueprint scene
+        ctx.fillStyle = "#0c1b2a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Grid lines (structured surveillance grid)
+        ctx.strokeStyle = "#162f47";
+        ctx.lineWidth = 1;
+        for (let x = 0; x < canvas.width; x += 80) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, canvas.height);
+          ctx.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += 50) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvas.width, y);
+          ctx.stroke();
+        }
+
+        // Roadway demarcation
+        ctx.fillStyle = "#122538";
+        ctx.fillRect(0, 180, canvas.width, 160);
+
+        // Lane divider dashed line
+        ctx.strokeStyle = "#2e4c6e";
+        ctx.setLineDash([12, 10]);
+        ctx.beginPath();
+        ctx.moveTo(0, 260);
+        ctx.lineTo(canvas.width, 260);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Sidewalk / Walkway
+        ctx.fillStyle = "#162b3d";
+        ctx.fillRect(0, 110, canvas.width, 65);
+
+        // Update and draw simulated objects
+        let persons = 0;
+        let vehicles = 0;
+        let anomalies = 0;
+
+        simulatedObjects.forEach(obj => {
+          if (obj.class === "person") persons++;
+          else if (obj.class === "ANOMALY_COLLISION") anomalies++;
+          else vehicles++;
+
+          // Move object
+          obj.x += obj.vx;
+          obj.y += obj.vy;
+
+          // Wrap boundaries
+          if (obj.x > canvas.width + 60) obj.x = -120;
+          if (obj.x < -140) obj.x = canvas.width + 40;
+
+          // Bounding box color by class
+          let boxColor = "#22c55e"; // default normal
+          if (obj.class === "car" || obj.class === "truck" || obj.class === "motorcycle") {
+            boxColor = "#0284c7"; // vehicle blue
+          } else if (obj.class === "person") {
+            boxColor = "#eab308"; // pedestrian amber
+          } else if (obj.class === "ANOMALY_COLLISION") {
+            boxColor = "#ef4444"; // threat crimson
+          }
+
+          // Render physical box representation (simple vehicle/person silhouette)
+          ctx.fillStyle = boxColor;
+          ctx.globalAlpha = 0.25;
+          ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+          ctx.globalAlpha = 1.0;
+
+          // Bounding Box stroke
+          if (showBoxes) {
+            ctx.strokeStyle = boxColor;
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(obj.x, obj.y, obj.w, obj.h);
+          }
+
+          // Centroid marker
+          if (showCentroids) {
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(obj.x + obj.w / 2 - 2, obj.y + obj.h / 2 - 2, 4, 4);
+          }
+
+          // Label
+          if (showLabels) {
+            ctx.fillStyle = boxColor;
+            ctx.fillRect(obj.x, obj.y - 15, obj.w > 80 ? obj.w : 85, 15);
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "10px monospace";
+            ctx.fillText(`${obj.class.toUpperCase()} ${(obj.conf * 100).toFixed(0)}%`, obj.x + 3, obj.y - 4);
+          }
+        });
+
+        // Threat banner overlay if active
+        if (threatEventActive) {
+          ctx.fillStyle = "rgba(185, 28, 28, 0.85)";
+          ctx.fillRect(canvas.width / 2 - 180, 20, 360, 28);
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "bold 11px monospace";
+          ctx.textAlign = "center";
+          ctx.fillText("CRITICAL INCIDENT: OBSTACLE CLASSIFIED [YOLOv8]", canvas.width / 2, 38);
+          ctx.textAlign = "left";
+        }
+
+        // Update counts in bottom bar
+        const countsEl = document.getElementById("canvasCounts");
+        if (countsEl) {
+          countsEl.textContent = `DETECTED OBJECTS: ${persons} PERSONS, ${vehicles} VEHICLES, ${anomalies} THREAT ANOMALIES`;
+        }
+      }
+
+      requestAnimationFrame(renderTelemetryLoop);
+    }
+
+    /* ==========================================================================
+       PAGE INITIALIZATION
+       ========================================================================== */
+    window.addEventListener("DOMContentLoaded", () => {
+      initMap();
+      renderIncidentsTable();
+      updateSummaryMetrics();
+      requestAnimationFrame(renderTelemetryLoop);
+    });
+  </script>
+</body>
+</html>

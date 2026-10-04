@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SmartCity AI Dashboard</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; background: #f4f6f9; transition: background 0.5s; }
+
+        header {
+            background: #002b55;
+            color: white;
+            padding: 15px;
+            font-size: 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #clock { font-size: 16px; }
+        #container { display: flex; }
+        #map { height: 90vh; width: 75%; }
+
+        #panel {
+            width: 25%;
+            background: white;
+            padding: 15px;
+            box-shadow: -2px 0px 5px rgba(0,0,0,0.1);
+        }
+
+        .stat {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .low { background: green; }
+        .medium { background: goldenrod; }
+        .high { background: orange; }
+        .critical { background: red; }
+
+        @keyframes flashRed {
+            0% { background: #f4f6f9; }
+            50% { background: #ffcccc; }
+            100% { background: #f4f6f9; }
+        }
+
+        .flash { animation: flashRed 1s infinite; }
+
+        #enableSoundBtn {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            padding: 8px 12px;
+            background: #004080;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            z-index: 999;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    🚨 SmartCity AI Live Incident Dashboard
+    <div id="clock"></div>
+</header>
+
+<button id="enableSoundBtn" onclick="enableAudio()">🔊 Enable Alarm Sound</button>
+
+<div id="container">
+    <div id="map"></div>
+    <div id="panel">
+        <h3>📊 Incident Stats</h3>
+        <div id="lowCount" class="stat low">LOW: 0</div>
+        <div id="mediumCount" class="stat medium">MEDIUM: 0</div>
+        <div id="highCount" class="stat high">HIGH: 0</div>
+        <div id="criticalCount" class="stat critical">CRITICAL: 0</div>
+    </div>
+</div>
+
+<audio id="alarmSound" preload="auto">
+    <source src="alarm.wav" type="audio/wav">
+</audio>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+    let alarmInterval = null;
+    let alarmEnabled = false;
+
+    function enableAudio() {
+        const alarm = document.getElementById("alarmSound");
+        alarm.volume = 1.0;
+        alarm.muted = false;
+
+        alarm.play().then(() => {
+            alarm.pause();
+            alarm.currentTime = 0;
+            alarmEnabled = true;
+            alert("Alarm system activated!");
+        }).catch(err => {
+            console.log(err);
+            alert("Click again to allow sound.");
+        });
+    }
+
+    function showCriticalPopup() {
+        const popup = document.createElement("div");
+        popup.innerText = "🚨 CRITICAL INCIDENT DETECTED 🚨";
+        popup.style.position = "fixed";
+        popup.style.top = "20px";
+        popup.style.left = "50%";
+        popup.style.transform = "translateX(-50%)";
+        popup.style.background = "red";
+        popup.style.color = "white";
+        popup.style.padding = "15px 30px";
+        popup.style.fontSize = "22px";
+        popup.style.borderRadius = "8px";
+        popup.style.zIndex = "1000";
+        popup.style.boxShadow = "0 0 15px black";
+        document.body.appendChild(popup);
+        setTimeout(() => popup.remove(), 5000);
+    }
+
+    function speakAlert(text) {
+        const msg = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(msg);
+    }
+
+    setInterval(() => {
+        document.getElementById("clock").innerText = new Date().toLocaleString();
+    }, 1000);
+
+    var map = L.map('map').setView([28.6139, 77.2090], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    var incidentLayer = L.layerGroup().addTo(map);
+
+    function getColor(severity) {
+        if (severity === "LOW") return "green";
+        if (severity === "MEDIUM") return "goldenrod";
+        if (severity === "HIGH") return "orange";
+        if (severity === "CRITICAL") return "red";
+        return "blue";
+    }
+    async function loadIncidents() {
+        try {
+            incidentLayer.clearLayers();
+            const res = await fetch("/api/detections/active");
+            const data = await res.json();
+
+            let low = 0, medium = 0, high = 0, critical = 0;
+            let hasCritical = false;
+
+            data.forEach(i => {
+                L.circleMarker([i.latitude, i.longitude], {
+                    radius: 8,
+                    color: getColor(i.severity),
+                    fillColor: getColor(i.severity),
+                    fillOpacity: 0.8
+                })
+                    .addTo(incidentLayer)
+                    .bindPopup(`
+                <b>Threat:</b> ${i.threatType}<br>
+                <b>Severity:</b> ${i.severity}<br>
+                <b>Confidence:</b> ${i.confidence}<br>
+                <b>Status:</b> ${i.status}<br><br>
+                <button onclick="resolveIncident(${i.id})"
+                    style="padding:6px 10px;background:#004080;color:white;border:none;border-radius:4px;cursor:pointer;">
+                    Mark as Resolved
+                </button>
+            `);
+
+                if (i.severity === "LOW") low++;
+                if (i.severity === "MEDIUM") medium++;
+                if (i.severity === "HIGH") high++;
+                if (i.severity === "CRITICAL") {
+                    critical++;
+                    hasCritical = true;
+                }
+            });
+
+            // Update stats
+            document.getElementById("lowCount").innerText = "LOW: " + low;
+            document.getElementById("mediumCount").innerText = "MEDIUM: " + medium;
+            document.getElementById("highCount").innerText = "HIGH: " + high;
+            document.getElementById("criticalCount").innerText = "CRITICAL: " + critical;
+
+            const alarm = document.getElementById("alarmSound");
+
+            // Start siren if critical appears
+            if (hasCritical && alarmEnabled && !alarmInterval) {
+                alarm.loop = true;
+                alarm.currentTime = 0;
+                alarm.play().catch(err => console.log("Alarm blocked:", err));
+
+                alarmInterval = true;
+
+                showCriticalPopup();
+                speakAlert("Critical incident detected. Immediate attention required.");
+            }
+
+            // Stop siren if no more critical incidents
+            if (!hasCritical && alarmInterval) {
+                alarm.pause();
+                alarm.currentTime = 0;
+                alarm.loop = false;
+                alarmInterval = null;
+            }
+
+            // Flash screen if critical
+            document.body.classList.toggle("flash", hasCritical);
+
+        } catch (err) {
+            console.log("Dashboard error:", err);
+        }
+    }
+
+
+
+
+
+
+    loadIncidents();
+    setInterval(loadIncidents, 5000);
+    async function resolveIncident(id) {
+        try {
+            await fetch(`/api/detections/resolve/${id}`, {
+                method: "PUT"
+            });
+
+            speakAlert("Incident marked as resolved");
+            loadIncidents(); // refresh map after resolving
+        } catch (err) {
+            console.log("Resolve failed:", err);
+            alert("Failed to resolve incident");
+        }
+    }
+
+</script>
+
+</body>
+</html>

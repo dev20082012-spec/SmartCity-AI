@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "src/main/resources/static/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/alarm.wav",
+      "dest": "/src/main/resources/static/alarm.wav"
+    },
+    {
+      "src": "/dashboard(.*)",
+      "dest": "/src/main/resources/static/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
