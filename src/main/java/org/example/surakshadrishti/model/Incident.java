@@ -30,5 +30,6 @@ public class Incident {
 
     private LocalDateTime timestamp;
 
-    private String status; // ACTIVE, RESOLVED
+    // status string thingy either ACTIVE or RESOLVED i think
+    private String status;
 }

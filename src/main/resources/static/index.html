@@ -187,7 +187,7 @@
                 }
             });
 
-            // Update stats
+            // numbers go up on side panel
             document.getElementById("lowCount").innerText = "LOW: " + low;
             document.getElementById("mediumCount").innerText = "MEDIUM: " + medium;
             document.getElementById("highCount").innerText = "HIGH: " + high;
@@ -195,7 +195,7 @@
 
             const alarm = document.getElementById("alarmSound");
 
-            // Start siren if critical appears
+            // start making annoying noise if something is burning
             if (hasCritical && alarmEnabled && !alarmInterval) {
                 alarm.loop = true;
                 alarm.currentTime = 0;
@@ -207,7 +207,7 @@
                 speakAlert("Critical incident detected. Immediate attention required.");
             }
 
-            // Stop siren if no more critical incidents
+            // shut up alarm when critical is gone
             if (!hasCritical && alarmInterval) {
                 alarm.pause();
                 alarm.currentTime = 0;
@@ -215,18 +215,13 @@
                 alarmInterval = null;
             }
 
-            // Flash screen if critical
+            // red flashing screen like red alert in movies
             document.body.classList.toggle("flash", hasCritical);
 
         } catch (err) {
             console.log("Dashboard error:", err);
         }
     }
-
-
-
-
-
 
     loadIncidents();
     setInterval(loadIncidents, 5000);
@@ -237,7 +232,7 @@
             });
 
             speakAlert("Incident marked as resolved");
-            loadIncidents(); // refresh map after resolving
+            loadIncidents(); // reload everything again cause no websockets lol
         } catch (err) {
             console.log("Resolve failed:", err);
             alert("Failed to resolve incident");

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   
   <style>
-    /* Institutional & Enterprise Design System: No gradients, no shadows, no soft curves */
+    
     :root {
       --bg-canvas: #f0f2f5;
       --bg-surface: #ffffff;
@@ -27,7 +27,7 @@
       --brand-navy: #1b365d;
       --brand-navy-hover: #122540;
       
-      /* Semantic Status Indicators */
+      
       --status-critical: #b91c1c;
       --status-critical-bg: #fee2e2;
       --status-high: #c2410c;
@@ -68,7 +68,7 @@
       color: var(--brand-navy-hover);
     }
 
-    /* Top Utility Bar */
+    
     .top-utility-bar {
       background-color: #0b1a29;
       color: #94a3b8;
@@ -93,7 +93,7 @@
       margin-right: 6px;
     }
 
-    /* Main Header */
+    
     header.site-header {
       background-color: var(--bg-header);
       color: var(--text-on-dark);
@@ -123,7 +123,7 @@
       margin-top: 2px;
     }
 
-    /* Main Navigation */
+    
     nav.main-nav {
       background-color: var(--bg-header-alt);
       border-bottom: 1px solid #204569;
@@ -151,14 +151,14 @@
       text-decoration: none;
     }
 
-    /* Content Layout Container */
+    
     .container {
       max-width: 1400px;
       margin: 0 auto;
       padding: 24px;
     }
 
-    /* Operational Notice / Banner */
+    
     .operational-banner {
       background-color: var(--bg-surface);
       border: 1px solid var(--border-color);
@@ -186,7 +186,7 @@
       gap: 10px;
     }
 
-    /* Standard Enterprise Buttons */
+    
     .btn {
       font-family: var(--font-system);
       font-size: 13px;
@@ -234,7 +234,7 @@
       font-size: 12px;
     }
 
-    /* Section Headers */
+    
     .section-header {
       margin-bottom: 16px;
       display: flex;
@@ -255,7 +255,7 @@
       color: var(--text-muted);
     }
 
-    /* Layout Split Grids: Strictly 2-column or full width */
+    
     .grid-two-column {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -274,7 +274,7 @@
       }
     }
 
-    /* Panel Card */
+    
     .panel {
       background-color: var(--bg-surface);
       border: 1px solid var(--border-color);
@@ -304,7 +304,7 @@
       color: var(--text-muted);
     }
 
-    /* Status Badges */
+    
     .badge {
       display: inline-block;
       font-size: 11px;
@@ -346,7 +346,7 @@
       border-color: #cbd5e1;
     }
 
-    /* Metric Summary Bar: 4 columns, clean borders */
+    
     .metrics-bar {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -385,7 +385,7 @@
       margin-top: 6px;
     }
 
-    /* Map Interface Styles */
+    
     #incident-map {
       height: 520px;
       width: 100%;
@@ -423,7 +423,7 @@
       color: var(--text-main);
     }
 
-    /* Video Telemetry Canvas */
+    
     .canvas-container {
       position: relative;
       background-color: #0b1a29;
@@ -469,7 +469,7 @@
       z-index: 10;
     }
 
-    /* Data Tables: Strict tabular layout */
+    
     .table-container {
       width: 100%;
       overflow-x: auto;
@@ -514,7 +514,7 @@
       font-size: 12px;
     }
 
-    /* Architecture Flow Grid */
+    
     .arch-flow-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -552,7 +552,7 @@
       line-height: 1.4;
     }
 
-    /* Operational Document Section (TOS, Privacy, Specs) */
+    
     .document-body {
       background-color: #ffffff;
       border: 1px solid var(--border-color);
@@ -583,7 +583,7 @@
       margin-bottom: 6px;
     }
 
-    /* Modal Windows */
+    
     .modal-overlay {
       display: none;
       position: fixed;
@@ -631,7 +631,7 @@
       gap: 10px;
     }
 
-    /* Site Footer */
+    
     footer.site-footer {
       background-color: var(--bg-header);
       color: #94a3b8;
@@ -690,7 +690,7 @@
       color: #64748b;
     }
 
-    /* Clean Audio Indicator */
+    
     #audioStatusText {
       font-weight: 600;
     }
@@ -698,7 +698,7 @@
 </head>
 <body>
 
-  <!-- Top Utility Bar: Operational Metadata -->
+  
   <div class="top-utility-bar">
     <div class="top-utility-left">
       <span><span class="status-indicator-dot"></span>SYS-STATUS: OPERATIONAL</span>
@@ -712,7 +712,7 @@
     </div>
   </div>
 
-  <!-- Main Institutional Header -->
+  
   <header class="site-header">
     <div class="header-inner">
       <div>
@@ -727,7 +727,7 @@
     </div>
   </header>
 
-  <!-- Navigation Bar -->
+  
   <nav class="main-nav">
     <div class="nav-inner">
       <a href="#overview" class="nav-link active">SYSTEM OVERVIEW</a>
@@ -741,10 +741,10 @@
     </div>
   </nav>
 
-  <!-- Main Container -->
+  
   <main class="container">
 
-    <!-- Operational Briefing Banner -->
+    
     <section id="overview" class="operational-banner">
       <div>
         <div class="banner-text-title">MUNICIPAL INCIDENT COMMAND NOTIFICATION</div>
@@ -759,7 +759,7 @@
       </div>
     </section>
 
-    <!-- Operational Metrics Summary Bar (4 Columns, Flat, No Shadow) -->
+    
     <section class="metrics-bar">
       <div class="metric-card">
         <div class="metric-label">ACTIVE INCIDENTS</div>
@@ -783,7 +783,7 @@
       </div>
     </section>
 
-    <!-- PRODUCT DEMO 1: GIS Incident Command Map (Real Leaflet Interface) -->
+    
     <section id="incident-map-section" class="panel">
       <div class="panel-header">
         <div>LIVE GIS INCIDENT MAP : DELHI NCR SURVEILLANCE GRID</div>
@@ -792,7 +792,7 @@
         </div>
       </div>
 
-      <!-- Map Toolbar Controls -->
+      
       <div class="map-controls-bar">
         <div class="map-filter-group">
           <label class="control-label" for="filterSeverity">FILTER BY SEVERITY:</label>
@@ -823,7 +823,7 @@
         </div>
       </div>
 
-      <!-- Map + Details Split Layout -->
+      
       <div class="grid-map-split" style="margin-bottom: 0;">
         <div id="incident-map"></div>
 
@@ -852,7 +852,7 @@
       </div>
     </section>
 
-    <!-- PRODUCT DEMO 2: Real-Time Edge Vision Telemetry (Functional Canvas Simulator) -->
+    
     <section id="telemetry-section" class="panel">
       <div class="panel-header">
         <div>LIVE COMPUTER VISION INFERENCE CONSOLE : YOLOv8 DETECTIONS</div>
@@ -861,7 +861,7 @@
         </div>
       </div>
 
-      <!-- Telemetry Control Bar -->
+      
       <div class="map-controls-bar">
         <div class="map-filter-group">
           <label class="control-label" for="cameraSelect">CAMERA FEED:</label>
@@ -885,7 +885,7 @@
         </div>
       </div>
 
-      <!-- Canvas Feed Viewport -->
+      
       <div class="canvas-container">
         <div class="telemetry-overlay-bar">
           <div><span id="canvasCamName">CAM-01 : CONNAUGHT CIRCUS NORTH CONCOURSE</span></div>
@@ -905,7 +905,7 @@
       </div>
     </section>
 
-    <!-- INCIDENT LOG & DISPATCH QUEUE: Tabular Data View (No Cards) -->
+    
     <section id="incident-log-section" class="panel">
       <div class="panel-header">
         <div>ACTIVE INCIDENT DISPATCH QUEUE & AUDIT LOG</div>
@@ -932,7 +932,7 @@
               </tr>
             </thead>
             <tbody id="incidentsTableBody">
-              <!-- Dynamically rendered -->
+              
             </tbody>
           </table>
         </div>
@@ -943,7 +943,7 @@
       </div>
     </section>
 
-    <!-- SYSTEM ARCHITECTURE & DATA FLOW SPECIFICATION -->
+    
     <section id="architecture-section" class="panel">
       <div class="panel-header">
         <div>SYSTEM ARCHITECTURE & MULTI-TIER DATA PIPELINE</div>
@@ -1035,7 +1035,7 @@
       </div>
     </section>
 
-    <!-- API SPECIFICATION SECTION -->
+    
     <section id="api-spec-section" class="panel">
       <div class="panel-header">
         <div>MUNICIPAL INTEGRATION REST API ENDPOINTS</div>
@@ -1091,7 +1091,7 @@
       </div>
     </section>
 
-    <!-- DATA PRIVACY POLICY & COMPLIANCE -->
+    
     <section id="privacy-policy-section" class="panel">
       <div class="panel-header">
         <div>PRIVACY POLICY & MUNICIPAL DATA GOVERNANCE</div>
@@ -1125,7 +1125,7 @@
       </div>
     </section>
 
-    <!-- TERMS OF SERVICE -->
+    
     <section id="terms-of-service-section" class="panel">
       <div class="panel-header">
         <div>TERMS OF SERVICE : MUNICIPAL PLATFORM OPERATING AGREEMENT</div>
@@ -1161,7 +1161,7 @@
 
   </main>
 
-  <!-- Site Footer -->
+  
   <footer class="site-footer">
     <div class="footer-inner">
       <div>
@@ -1211,14 +1211,12 @@
     </div>
   </footer>
 
-  <!-- Leaflet GIS Script -->
+  
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-  <!-- Application Logic -->
+  
   <script>
-    /* ==========================================================================
-       DATA STORE: Operational Incidents
-       ========================================================================== */
+    
     let incidents = [
       {
         id: "INC-2026-0841",
@@ -1287,9 +1285,7 @@
       }
     ];
 
-    /* ==========================================================================
-       SYSTEM CLOCK (UTC and IST)
-       ========================================================================== */
+    
     function updateClocks() {
       const now = new Date();
       const utcStr = now.toUTCString().split(" ")[4];
@@ -1302,9 +1298,7 @@
     setInterval(updateClocks, 1000);
     updateClocks();
 
-    /* ==========================================================================
-       AUDIO ALARM SYSTEM (Web Audio API Synthesizer - 100% Reliable)
-       ========================================================================== */
+    
     let audioContext = null;
     let alarmActive = false;
     let alarmEnabled = false;
@@ -1373,9 +1367,7 @@
       }
     }
 
-    /* ==========================================================================
-       LEAFLET GIS INCIDENT COMMAND MAP
-       ========================================================================== */
+    
     let map = null;
     let markersLayer = null;
 
@@ -1583,9 +1575,7 @@
       }
     }
 
-    /* ==========================================================================
-       INCIDENT DATA TABLE
-       ========================================================================== */
+    
     function renderIncidentsTable() {
       const tbody = document.getElementById("incidentsTableBody");
       if (!tbody) return;
@@ -1653,9 +1643,7 @@
       document.body.removeChild(link);
     }
 
-    /* ==========================================================================
-       CANVAS COMPUTER VISION TELEMETRY SIMULATOR
-       ========================================================================== */
+    
     const canvas = document.getElementById("telemetry-canvas");
     let ctx = canvas ? canvas.getContext("2d") : null;
     let streamPaused = false;
@@ -1665,7 +1653,6 @@
     let activeCamera = "cam-01";
     let threatEventActive = false;
 
-    // Simulation entities
     let simulatedObjects = [];
 
     function initSimulatedObjects() {
@@ -1722,7 +1709,6 @@
       initAudioContext();
       playTone(880, 0.3);
 
-      // Inject stopped collision vehicles
       simulatedObjects.push({
         id: 999,
         class: "ANOMALY_COLLISION",
@@ -1745,11 +1731,9 @@
       if (!ctx || !canvas) return;
 
       if (!streamPaused) {
-        // Draw background urban blueprint scene
         ctx.fillStyle = "#0c1b2a";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Grid lines (structured surveillance grid)
         ctx.strokeStyle = "#162f47";
         ctx.lineWidth = 1;
         for (let x = 0; x < canvas.width; x += 80) {
@@ -1765,11 +1749,9 @@
           ctx.stroke();
         }
 
-        // Roadway demarcation
         ctx.fillStyle = "#122538";
         ctx.fillRect(0, 180, canvas.width, 160);
 
-        // Lane divider dashed line
         ctx.strokeStyle = "#2e4c6e";
         ctx.setLineDash([12, 10]);
         ctx.beginPath();
@@ -1778,11 +1760,9 @@
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Sidewalk / Walkway
         ctx.fillStyle = "#162b3d";
         ctx.fillRect(0, 110, canvas.width, 65);
 
-        // Update and draw simulated objects
         let persons = 0;
         let vehicles = 0;
         let anomalies = 0;
@@ -1792,44 +1772,37 @@
           else if (obj.class === "ANOMALY_COLLISION") anomalies++;
           else vehicles++;
 
-          // Move object
           obj.x += obj.vx;
           obj.y += obj.vy;
 
-          // Wrap boundaries
           if (obj.x > canvas.width + 60) obj.x = -120;
           if (obj.x < -140) obj.x = canvas.width + 40;
 
-          // Bounding box color by class
-          let boxColor = "#22c55e"; // default normal
+          let boxColor = "#22c55e";
           if (obj.class === "car" || obj.class === "truck" || obj.class === "motorcycle") {
-            boxColor = "#0284c7"; // vehicle blue
+            boxColor = "#0284c7";
           } else if (obj.class === "person") {
-            boxColor = "#eab308"; // pedestrian amber
+            boxColor = "#eab308";
           } else if (obj.class === "ANOMALY_COLLISION") {
-            boxColor = "#ef4444"; // threat crimson
+            boxColor = "#ef4444";
           }
 
-          // Render physical box representation (simple vehicle/person silhouette)
           ctx.fillStyle = boxColor;
           ctx.globalAlpha = 0.25;
           ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
           ctx.globalAlpha = 1.0;
 
-          // Bounding Box stroke
           if (showBoxes) {
             ctx.strokeStyle = boxColor;
             ctx.lineWidth = 1.5;
             ctx.strokeRect(obj.x, obj.y, obj.w, obj.h);
           }
 
-          // Centroid marker
           if (showCentroids) {
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(obj.x + obj.w / 2 - 2, obj.y + obj.h / 2 - 2, 4, 4);
           }
 
-          // Label
           if (showLabels) {
             ctx.fillStyle = boxColor;
             ctx.fillRect(obj.x, obj.y - 15, obj.w > 80 ? obj.w : 85, 15);
@@ -1839,7 +1812,6 @@
           }
         });
 
-        // Threat banner overlay if active
         if (threatEventActive) {
           ctx.fillStyle = "rgba(185, 28, 28, 0.85)";
           ctx.fillRect(canvas.width / 2 - 180, 20, 360, 28);
@@ -1850,7 +1822,6 @@
           ctx.textAlign = "left";
         }
 
-        // Update counts in bottom bar
         const countsEl = document.getElementById("canvasCounts");
         if (countsEl) {
           countsEl.textContent = `DETECTED OBJECTS: ${persons} PERSONS, ${vehicles} VEHICLES, ${anomalies} THREAT ANOMALIES`;
@@ -1860,9 +1831,7 @@
       requestAnimationFrame(renderTelemetryLoop);
     }
 
-    /* ==========================================================================
-       PAGE INITIALIZATION
-       ========================================================================== */
+    
     window.addEventListener("DOMContentLoaded", () => {
       initMap();
       renderIncidentsTable();

@@ -12,18 +12,19 @@ from fastapi import FastAPI, Response
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
 from pydantic import BaseModel
 
-# Configuration Defaults
+# random config stuff
 API_URL = "http://localhost:8080/api/detections"
 CAMERA_ID = "LAPTOP_CAM_1"
 LATITUDE = 28.6139
 LONGITUDE = 77.2090
 
-ALERT_COOLDOWN = 6  # seconds
+# cooldown so backend doesnt die
+ALERT_COOLDOWN = 6
 YOLO_CONFIDENCE = 0.6
 CROWD_THRESHOLD = 4
 PORT = 5000
 
-# Global shared state
+# giant state dictionary pls dont break anything
 state = {
     "fps": 0.0,
     "person_count": 0,
@@ -46,16 +47,17 @@ latest_frame_jpeg = None
 frame_lock = threading.Lock()
 running = True
 
-# Initialize YOLO model
+# yolov8 goes brrr
 print("Loading YOLO model (yolov8n.pt)...")
 model = YOLO("yolov8n.pt")
 
 
+# send alert in thread so webcam feed doesn't freeze
 def send_alert_async(threat: str, severity: str, confidence: float):
-    """Dispatches alert in a background thread to prevent frame drops."""
     def _worker():
         global state
         now = time.time()
+        # skip if too soon
         if now - state["last_alert_time"] < state["alert_cooldown"]:
             return
 
@@ -89,7 +91,7 @@ def send_alert_async(threat: str, severity: str, confidence: float):
             alert_record["status"] = "Spring Boot Offline (Logged Locally)"
             print(f" [ALERT LOCAL ONLY] {threat} ({severity}) - Backend unreachable: {e}")
 
-        # Keep last 25 alerts in memory for web UI
+        # keep 25 alerts only or ram dies lol
         state["recent_alerts"].insert(0, alert_record)
         if len(state["recent_alerts"]) > 25:
             state["recent_alerts"].pop()
@@ -97,8 +99,8 @@ def send_alert_async(threat: str, severity: str, confidence: float):
     threading.Thread(target=_worker, daemon=True).start()
 
 
+# hsv color mask for fire idk works okay
 def detect_fire(frame):
-    """Detects fire color signatures in HSV color space."""
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     lower_fire = np.array([5, 150, 150])
     upper_fire = np.array([35, 255, 255])
@@ -107,21 +109,21 @@ def detect_fire(frame):
     return fire_pixels > 7000
 
 
+# fake video feed if webcam is disconnected
 def create_simulation_frame(counter: int):
-    """Creates a high-tech synthetic frame if physical camera is inaccessible."""
     frame = np.zeros((480, 640, 3), dtype=np.uint8)
     
-    # Gradient backdrop
+    # fake dark gradient backdrop
     for y in range(480):
         frame[y, :] = (int(15 + y * 0.05), int(20 + y * 0.06), int(30 + y * 0.07))
 
-    # Grid overlay
+    # fake grid overlay
     for x in range(0, 640, 40):
         cv2.line(frame, (x, 0), (x, 480), (35, 45, 55), 1)
     for y in range(0, 480, 40):
         cv2.line(frame, (0, y), (640, y), (35, 45, 55), 1)
 
-    # Simulated targets moving
+    # fake target moving around
     x_pos = int(280 + 140 * np.sin(counter * 0.04))
     y_pos = int(220 + 70 * np.cos(counter * 0.04))
     
@@ -136,8 +138,8 @@ def create_simulation_frame(counter: int):
     return frame
 
 
+# main camera loop
 def video_processing_loop(show_gui: bool = False):
-    """Background worker thread capturing frames, running YOLO and fire detection."""
     global latest_frame_jpeg, running, state
     
     print("Opening camera feed (index 0)...")
@@ -175,7 +177,7 @@ def video_processing_loop(show_gui: bool = False):
             frame = create_simulation_frame(sim_counter)
             sim_counter += 1
 
-        # Fire Detection
+        # check for fire stuff
         fire_active = detect_fire(frame)
         state["fire_detected"] = fire_active
         if fire_active:
@@ -184,7 +186,7 @@ def video_processing_loop(show_gui: bool = False):
             cv2.putText(frame, " CRITICAL: FIRE DETECTED ", (30, 50),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.85, (0, 0, 255), 3)
 
-        # YOLO Inference
+        # run yolo
         conf_thresh = state["yolo_confidence"]
         results = model(frame, imgsz=320, conf=conf_thresh, verbose=False)[0]
         annotated = results.plot()
@@ -207,7 +209,7 @@ def video_processing_loop(show_gui: bool = False):
         state["person_count"] = person_count
         state["suspicious_objects"] = suspicious_count
 
-        # Crowd Panic Detection
+        # crowd panic if humans exceed threshold
         crowd_thresh = state["crowd_threshold"]
         is_crowd = person_count >= crowd_thresh
         state["crowd_detected"] = is_crowd
@@ -216,13 +218,13 @@ def video_processing_loop(show_gui: bool = False):
             cv2.putText(annotated, f" ALERT: CROWD PANIC ({person_count} PERSONS)", (30, 90),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 165, 255), 3)
 
-        # HUD Overlay on frame
+        # text overlay
         cv2.putText(annotated, f"FPS: {state['fps']:.1f} | CAM: {CAMERA_ID}", (15, 465),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 200), 2)
         cv2.putText(annotated, f"PERSONS: {person_count} | FIRE: {'YES' if fire_active else 'NO'}", (15, 25),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 2)
 
-        # Calculate FPS
+        # fps counter
         frame_count += 1
         now = time.time()
         elapsed = now - fps_timer
@@ -231,20 +233,20 @@ def video_processing_loop(show_gui: bool = False):
             frame_count = 0
             fps_timer = now
 
-        # Encode JPEG for web streaming
+        # encode to jpeg for web
         ret_enc, jpeg_bytes = cv2.imencode('.jpg', annotated, [cv2.IMWRITE_JPEG_QUALITY, 80])
         if ret_enc:
             with frame_lock:
                 latest_frame_jpeg = jpeg_bytes.tobytes()
 
-        # Optional Desktop Window if --gui is passed
+        # gui popup if flag given
         if show_gui:
             cv2.imshow("SmartCity AI - Live Feed", annotated)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 running = False
                 break
 
-        # Brief sleep to pace capture loop if running synthetic feed
+        # sleep tiny bit so cpu doesnt melt
         if not camera_opened:
             time.sleep(0.04)
 
@@ -255,12 +257,12 @@ def video_processing_loop(show_gui: bool = False):
     print("Video processing thread stopped.")
 
 
-# FastAPI Application Setup
+# fastapi junk
 app = FastAPI(title="SmartCity AI Live Feed", version="2.0")
 
 
+# stream frames to browser
 def generate_frames():
-    """Generator yielding MJPEG multipart stream for <img> tag."""
     while running:
         with frame_lock:
             frame_data = latest_frame_jpeg
@@ -268,12 +270,11 @@ def generate_frames():
         if frame_data is not None:
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame_data + b'\r\n')
-        time.sleep(0.033)  # ~30 FPS max streaming
+        time.sleep(0.033)
 
 
 @app.get("/video_feed")
 def video_feed():
-    """Endpoint serving real-time video stream."""
     return StreamingResponse(
         generate_frames(),
         media_type="multipart/x-mixed-replace; boundary=frame"
@@ -282,7 +283,6 @@ def video_feed():
 
 @app.get("/api/stats")
 def get_stats():
-    """Real-time detection statistics and active telemetry."""
     return JSONResponse(state)
 
 
@@ -931,7 +931,7 @@ HTML_DASHBOARD = """
             }
         }
 
-        // Poll stats every second
+        // spam api every second for state
         setInterval(fetchStats, 1000);
         fetchStats();
     </script>
@@ -942,12 +942,11 @@ HTML_DASHBOARD = """
 
 @app.get("/", response_class=HTMLResponse)
 def index():
-    """Serves the SmartCity AI Web Dashboard."""
     return HTMLResponse(content=HTML_DASHBOARD)
 
 
+# delayed browser launcher
 def open_browser_delayed(url: str, delay: float = 1.2):
-    """Opens browser automatically after server boots."""
     def _open():
         time.sleep(delay)
         print(f"\n🚀 Opening web interface at {url}")
@@ -962,11 +961,11 @@ if __name__ == "__main__":
     parser.add_argument("--no-browser", action="store_true", help="Do not automatically launch web browser")
     args = parser.parse_args()
 
-    # Start video processing loop in background thread
+    # background camera thread
     t_video = threading.Thread(target=video_processing_loop, args=(args.gui,), daemon=True)
     t_video.start()
 
-    # Launch browser automatically
+    # auto open browser
     web_url = f"http://localhost:{args.port}"
     if not args.no_browser:
         open_browser_delayed(web_url)
